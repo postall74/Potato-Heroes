@@ -39,14 +39,50 @@ namespace PotatoHeroes.EditorTools
         {
             EditorApplication.delayCall += () =>
             {
+                var bootstrapType = System.Type.GetType("PotatoHeroes.Bootstrap, Assembly-CSharp");
+                if (bootstrapType == null) return; // скрипты ещё не скомпилированы — повторим при следующем открытии
+
                 var scene = UnityEngine.SceneManagement.SceneManager.GetActiveScene();
                 if (!scene.IsValid()) return;
+
+                bool dirty = false;
                 var roots = scene.GetRootGameObjects();
-                foreach (var r in roots) if (r.name == "[GAME]") return;
-                var go = new GameObject("[GAME]");
-                go.AddComponent<PotatoHeroes.Bootstrap>();
-                UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(scene);
-                Debug.Log("[PotatoHeroes] Добавлен объект [GAME] со скриптом Bootstrap в сцену.");
+
+                // 1) Чиним "потерянные" скрипты: объект [GAME] без компонента-скрипта
+                foreach (var r in roots)
+                {
+                    if (r.name != "[GAME]") continue;
+                    var comps = r.GetComponents<Component>();
+                    bool hasBootstrap = false, hasMissing = false;
+                    foreach (var c in comps)
+                    {
+                        if (c == null) { hasMissing = true; continue; }
+                        if (c.GetType() == bootstrapType) hasBootstrap = true;
+                    }
+                    if (!hasBootstrap)
+                    {
+                        if (hasMissing)
+                            Debug.LogWarning("[PotatoHeroes] Найдена потерянная ссылка на скрипт на [GAME] — переподключаем Bootstrap.");
+                        r.AddComponent(bootstrapType);
+                        dirty = true;
+                    }
+                }
+
+                // 2) Если объекта [GAME] вовсе нет — создаём
+                bool any = false;
+                foreach (var r in roots) if (r.name == "[GAME]") { any = true; break; }
+                if (!any)
+                {
+                    var go = new GameObject("[GAME]");
+                    go.AddComponent(bootstrapType);
+                    dirty = true;
+                }
+
+                if (dirty)
+                {
+                    UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(scene);
+                    Debug.Log("[PotatoHeroes] Сцена исправлена: на объекте [GAME] висит Bootstrap. Нажмите Play.");
+                }
             };
         }
 

@@ -17,7 +17,6 @@ namespace PotatoHeroes
         Rigidbody2D _rb;
         SpriteRenderer _sr;
         SpriteAnimator _anim;
-        ContactCaster2D _cc;
         float _touchCd, _flashT, _wobblePhase;
         Vector3 _baseScale;
 
@@ -41,15 +40,6 @@ namespace PotatoHeroes
             col.radius = Radius;
             col.isTrigger = false;
 
-            // ContactCaster для детекции касания игрока (без физ. отдачи)
-            try
-            {
-                var layer = new LayerMask { value = 1 << PLAYER_LAYER };
-                _cc = _rb.AddContactCaster2D(col, layer, .05f, false);
-                _cc.onContactFunction += OnContact;
-            }
-            catch { /* на худой конец сработает дистанционная атака ниже */ }
-
             All.Add(this);
         }
 
@@ -61,11 +51,6 @@ namespace PotatoHeroes
             _anim.Play(frames, fps);
             _baseScale = transform.localScale;
             _wobblePhase = Random.value * 6.28f;
-        }
-
-        void OnContact(ContactParam2D p)
-        {
-            if (p.otherGameObject.layer == PLAYER_LAYER) TryTouchAttack();
         }
 
         void TryTouchAttack()

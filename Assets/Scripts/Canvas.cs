@@ -20,7 +20,7 @@ namespace PotatoHeroes
 
         void Awake()
         {
-            // Защита от дубликатов синглтона (сообщение "Multiple managers are loaded of type: PhysicsManager")
+            // Защита от дубликатов синглтона
             if (I != null && I != this) { Destroy(gameObject); return; }
             I = this;
             BuildCanvas();
@@ -28,20 +28,29 @@ namespace PotatoHeroes
 
         void BuildCanvas()
         {
-            var camGo = new GameObject("UICamera");
-            var cam = camGo.AddComponent<Camera>();
-            cam.orthographic = true; cam.clearFlags = CameraClearFlags.Nothing; cam.depth = 10;
-            camGo.transform.position = new Vector3(0, 0, -10);
-
+            // Screen Space Overlay — не требует UI-камеры и трансформации позиции.
             var go = new GameObject("Canvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
-            go.transform.SetParent(transform);
+            go.transform.SetParent(transform, false);
             _canvas = go.GetComponent<Canvas>();
-            _canvas.renderMode = RenderMode.ScreenSpaceCamera;
-            _canvas.worldCamera = cam;
+            _canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            _canvas.sortingOrder = 100;
             var sc = go.GetComponent<CanvasScaler>();
             sc.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             sc.referenceResolution = new Vector2(1280, 720);
             _root = go.GetComponent<RectTransform>();
+
+            // КРИТИЧНО для кликабельности кнопок: без EventSystem GraphicRaycaster
+            // ничего не доставляет в Button.onClick. Создаём вручную (в сцене его нет).
+            EnsureEventSystem();
+        }
+
+        static void EnsureEventSystem()
+        {
+            if (UnityEngine.EventSystems.EventSystem.current != null) return;
+            var es = new GameObject("EventSystem");
+            es.AddComponent<UnityEngine.EventSystems.EventSystem>();
+            // Legacy Input Manager (Input.GetAxis) — проект использует его, New Input System не ставим.
+            es.AddComponent<UnityEngine.EventSystems.StandaloneInputModule>();
         }
 
         static Font Font => AssetBank.I ? AssetBank.I.font : Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
@@ -146,7 +155,8 @@ namespace PotatoHeroes
         {
             var cam = Camera.main;
             var mp = RectTransformUtility.WorldToScreenPoint(cam, world);
-            RectTransformUtility.ScreenPointToLocalPointInRectangle(_root, mp, _canvas.worldCamera, out var lp);
+            // worldCamera = null: для Screen Space Overlay это правильный параметр.
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(_root, mp, null, out var lp);
             return lp;
         }
 

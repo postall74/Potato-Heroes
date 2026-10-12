@@ -108,14 +108,12 @@ namespace PotatoHeroes
             var pgo = new GameObject("Player");
             pgo.layer = LayerMask.NameToLayer("Player") >= 0 ? LayerMask.NameToLayer("Player") : 8;
             pgo.AddComponent<Rigidbody2D>();
+            // Rigidbody2D и SpriteRenderer — ЯВНО до AddComponent<Player>() (см. комментарий в SpawnEnemy)
+            var psr = pgo.AddComponent<SpriteRenderer>();
+            psr.sortingOrder = 8;
             pgo.AddComponent<SpriteAnimator>();
             var pl = pgo.AddComponent<Player>();
-            var frames = AssetBank.I.animFrames[def.sprite];
-            var psr = pgo.AddComponent<SpriteRenderer>();   // после Player — Awake получит его
-            psr.sprite = frames[0];
-            psr.pixelsPerUnit = GameCfg.PPU;
-            psr.sortingOrder = 8;
-            pl.Setup(def, frames);
+            pl.Configure(def, AssetBank.I.animFrames[def.sprite]);
             pl.weapons.Add(WeaponDef.Make(WeaponKind.SpudPistol));
             HUD.I.BindGame();
 
@@ -207,18 +205,16 @@ namespace PotatoHeroes
         {
             var def = EnemyDef.Make(t, wave);
             var go = new GameObject(def.nameRU);
-            // ВАЖНО: SpriteRenderer создаётся ПОСЛЕДНИМ. Awake() Enemy берёт его через
-            // GetComponent — так компонент гарантированно получает уже настроенный рендерер.
+            // ВАЖНО: Rigidbody2D и SpriteRenderer создаём ЯВНО до AddComponent<Enemy>() —
+            // иначе RequireComponent вынужден добавлять их внутри AddComponent ПОСЛЕ запуска
+            // Awake() Enemy, и GetComponent<SpriteRenderer>() в Awake возвращал null.
             go.transform.position = RandomEdgePos();
             go.AddComponent<Rigidbody2D>();
+            var sr0 = go.AddComponent<SpriteRenderer>();
+            sr0.sortingOrder = 6;
             go.AddComponent<SpriteAnimator>();
             var e = go.AddComponent<Enemy>();
-            var frames = AssetBank.I.animFrames[SheetFor(t)];
-            var sr = go.AddComponent<SpriteRenderer>();
-            sr.sprite = frames[0];
-            sr.pixelsPerUnit = GameCfg.PPU;   // реальный размер кадра в мире задаём сами
-            sr.sortingOrder = 6;
-            e.Setup(def, frames, def.animFps);
+            e.Configure(def, AssetBank.I.animFrames[SheetFor(t)], def.animFps);
         }
 
         void SpawnBoss()
@@ -227,14 +223,11 @@ namespace PotatoHeroes
             var go = new GameObject("BOSS");
             go.transform.position = new Vector3(0, GameCfg.ArenaH/2 - 2f);
             go.AddComponent<Rigidbody2D>();
+            var sr0 = go.AddComponent<SpriteRenderer>();
+            sr0.sortingOrder = 7;
             go.AddComponent<SpriteAnimator>();
             var e = go.AddComponent<Enemy>();
-            var frames = AssetBank.I.animFrames[SheetFor(EnemyType.BossKingGelatin)];
-            var sr = go.AddComponent<SpriteRenderer>();
-            sr.sprite = frames[0];
-            sr.pixelsPerUnit = GameCfg.PPU;
-            sr.sortingOrder = 7;
-            e.Setup(def, frames, def.animFps);
+            e.Configure(def, AssetBank.I.animFrames[SheetFor(EnemyType.BossKingGelatin)], def.animFps);
             _bossAlive = true; bossKilledFlag = false;
         }
 

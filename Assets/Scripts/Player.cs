@@ -47,6 +47,12 @@ namespace PotatoHeroes
             Physics2D.bounceThreshold = 0f;
         }
 
+        public void Configure(CharacterDef def, Sprite[] frames)
+        {
+            if (_sr != null) _sr.pixelsPerUnit = GameCfg.PPU;
+            Setup(def, frames);
+        }
+
         public void Setup(CharacterDef def, Sprite[] frames)
         {
             cdef = def;

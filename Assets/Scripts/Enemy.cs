@@ -54,6 +54,14 @@ namespace PotatoHeroes
 
         void OnDestroy() { All.Remove(this); }
 
+        // Полный цикл настройки вызывается спавнером СРАЗУ после AddComponent<Enemy>() —
+        // Awake к этому моменту уже отработал, все компоненты на месте.
+        public void Configure(EnemyDef d, Sprite[] frames, float fps)
+        {
+            Setup(d, frames, fps);
+            if (_sr != null) _sr.pixelsPerUnit = GameCfg.PPU;   // фиксированный размер кадра в мире
+        }
+
         public void Setup(EnemyDef d, Sprite[] frames, float fps)
         {
             def = d; hp = d.hp;

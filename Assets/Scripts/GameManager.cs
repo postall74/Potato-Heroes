@@ -60,14 +60,21 @@ namespace PotatoHeroes
 
         void BuildWorld()
         {
-            var ab = gameObject.AddComponent<AssetBank>();
-            _ = ab; // Awake загрузит ассеты
+            // AssetBank — ПЕРВЫМ: AddComponent сразу вызывает его Awake(), дальше AssetBank.I гарантированно готов
+            gameObject.AddComponent<AssetBank>();
+            if (AssetBank.I == null || AssetBank.I.animFrames.Count == 0)
+                Debug.LogError("[PH] AssetBank не загрузил спрайты! Проверьте путь Assets/Sprites");
             // Камера
             var camGo = new GameObject("MainCamera");
             var cam = camGo.AddComponent<Camera>();
             cam.orthographic = true; cam.clearFlags = CameraClearFlags.SolidColor;
             cam.backgroundColor = new Color(.05f,.06f,.09f);
-            cam.orthographicSize = GameCfg.ArenaH / 2f + 1.2f;
+            // Орто-размер: по высоте арены + запас; при широком экране (16:9) этого хватает,
+            // при узком — расширяем по aspect, чтобы ширина 26 юнитов всегда была видна
+            // Подбираем размер так, чтобы ширина арены (26 ед.) целиком влезала при любом aspect:
+            float needH = GameCfg.ArenaH / 2f + 1.5f;
+            float needByAspect = (GameCfg.ArenaW / 2f + 1f) / Mathf.Max(1f, cam.aspect);
+            cam.orthographicSize = Mathf.Max(needH, needByAspect);
             camGo.tag = "MainCamera";
             camGo.transform.position = new Vector3(0, 0, -10);
             var follow = camGo.AddComponent<CameraFollow>();
@@ -75,7 +82,7 @@ namespace PotatoHeroes
             // Пол арены: тайлы floor_tile
             _spawnRoot = new GameObject("Arena").transform;
             var bank = AssetBank.I;
-            float tileW = 32 / GameCfg.PPU, tileH = 32 / GameCfg.PPU;
+            float tileW = 128 / GameCfg.PPU, tileH = 128 / GameCfg.PPU;   // тайл шита = 128 px
             int cols = Mathf.CeilToInt(GameCfg.ArenaW / tileW), rows = Mathf.CeilToInt(GameCfg.ArenaH / tileH);
             for (int y = 0; y < rows; y++) for (int x = 0; x < cols; x++)
             {
@@ -165,7 +172,7 @@ namespace PotatoHeroes
             else if (phase == GamePhase.Intermission)
             {
                 // фаза подбора лута: жмём Enter или подбираем всё
-                if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.Space))
+                if (InputHelper.ContinuePressed())
                     ContinueAfterLoot();
             }
             HUD.I?.UpdateHud(wave, phase == GamePhase.Wave ? waveTimer : -1, kills, level, xp, xpNext,
@@ -233,10 +240,11 @@ namespace PotatoHeroes
 
         public void OnBossKilled() { bossKilledFlag = true; _bossAlive = false; }
 
+        // Спавн у края АРЕНЫ, но внутри неё — чтобы юниты сразу попадали в кадр.
         Vector2 RandomEdgePos()
         {
             int s = Random.Range(0, 4);
-            float hw = GameCfg.ArenaW/2 - .6f, hh = GameCfg.ArenaH/2 - .6f;
+            float hw = GameCfg.ArenaW/2 - 1.5f, hh = GameCfg.ArenaH/2 - 1.5f;
             return s switch
             {
                 0 => new Vector2(Random.Range(-hw,hw), hh),
@@ -370,11 +378,18 @@ namespace PotatoHeroes
     // Плавное следование камеры за игроком
     public class CameraFollow : MonoBehaviour
     {
+        Camera _cam;
         void LateUpdate()
         {
+            if (_cam == null) _cam = GetComponent<Camera>();
             var target = Player.I ? (Vector2)Player.I.Position : Vector2.zero;
-            float x = Mathf.Clamp(Mathf.Lerp(transform.position.x, target.x, Time.deltaTime * 6f), -2f, 2f);
-            float y = Mathf.Clamp(Mathf.Lerp(transform.position.y, target.y, Time.deltaTime * 6f), -1.5f, 1.5f);
+            float halfH = _cam != null ? _cam.orthographicSize : GameCfg.ArenaH / 2f;
+            float halfW = halfH * (_cam != null ? _cam.aspect : 16f / 9f);
+            // Если окно больше арены — держим камеру в центре; иначе ограничиваем по краям арены
+            float maxX = Mathf.Max(0f, GameCfg.ArenaW / 2f - halfW);
+            float maxY = Mathf.Max(0f, GameCfg.ArenaH / 2f - halfH);
+            float x = Mathf.Clamp(Mathf.Lerp(transform.position.x, target.x, Time.deltaTime * 6f), -maxX, maxX);
+            float y = Mathf.Clamp(Mathf.Lerp(transform.position.y, target.y, Time.deltaTime * 6f), -maxY, maxY);
             transform.position = new Vector3(x, y, transform.position.z); // z остаётся -10
         }
     }
@@ -384,5 +399,39 @@ namespace PotatoHeroes
     public static class UnityEditorTagLayer
     {
         public static void Assign(string name, int idx) { /* слои заданы в TagManager.asset */ }
+    }
+
+    // ВВОД С ДВОЙНОЙ СТРАХОВКОЙ. Если в проекте почему-то отсутствует настройка Input Manager
+    // (оси Horizontal/Vertical), Unity бросает ArgumentException каждый кадр. Здесь:
+    // 1) пробуем классические оси; 2) при исключении переходим на прямое чтение клавиш GetKey.
+    public static class InputHelper
+    {
+        static bool? _axesAvailable;
+
+        public static Vector2 MoveDir()
+        {
+            if (_axesAvailable == null)
+            {
+                try { Input.GetAxisRaw("Horizontal"); _axesAvailable = true; }
+                catch { _axesAvailable = false; Debug.LogWarning("[PH] Оси Input Manager недоступны — включаю фолбэк прямого чтения клавиш WASD/стрелок."); }
+            }
+            if (_axesAvailable == true)
+            {
+                try { return new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical")).normalized; }
+                catch { _axesAvailable = false; }
+            }
+            float x = 0f, y = 0f;
+            if (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow)) x -= 1f;
+            if (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow)) x += 1f;
+            if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.UpArrow)) y += 1f;
+            if (Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow)) y -= 1f;
+            return new Vector2(x, y).normalized;
+        }
+
+        public static bool ContinuePressed()
+        {
+            if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.Space)) return true;
+            try { return Input.GetButtonDown("Submit"); } catch { return false; }
+        }
     }
 }

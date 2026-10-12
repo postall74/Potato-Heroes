@@ -12,5 +12,6 @@ namespace PotatoHeroes
             gameObject.AddComponent<HUD>();          // сначала UI-синглтон
             gameObject.AddComponent<GameManager>();  // затем игра
         }
+
     }
 }

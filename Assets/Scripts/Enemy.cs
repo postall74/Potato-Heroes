@@ -67,7 +67,7 @@ namespace PotatoHeroes
         {
             def = d; hp = d.hp;
             if (!All.Contains(this)) All.Add(this);   // регистрируемся только после инициализации
-            Radius = GameCfg.S(d.spriteW, d.spriteH).x * .42f;
+            Radius = d.spriteW * .42f;   // d.spriteW — логический размер в юнитах (см. EnemyDef.Make)
             if (_col != null) _col.radius = Radius;
             if (_sr == null) _sr = GetComponent<SpriteRenderer>();
             if (_anim == null) _anim = GetComponent<SpriteAnimator>();

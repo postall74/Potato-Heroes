@@ -39,7 +39,7 @@ namespace PotatoHeroes
             _sr = GetComponent<SpriteRenderer>();   // создаётся спавнером ПОСЛЕ Player — берём сейчас
             _anim = GetComponent<SpriteAnimator>();
             var col = gameObject.AddComponent<CapsuleCollider2D>();
-            col.size = GameCfg.S(20, 24);
+            col.size = new Vector2(1.1f, 1.5f);
             col.offset = new Vector2(0, .1f);
             _rb.bodyType = RigidbodyType2D.Kinematic;
             _rb.gravityScale = 0f;
@@ -65,11 +65,20 @@ namespace PotatoHeroes
             if (_anim != null) _anim.Play(frames, 9f);
         }
 
+        float _flashT;
+
         void Update()
         {
             if (!Alive) return;
+            // Вспышка при уроне: плавное затухание цвета каждый кадр (без корутины — она «мигала»)
+            if (_flashT > 0f)
+            {
+                _flashT -= Time.deltaTime;
+                _sr.color = Color.Lerp(Color.white, Color.red, Mathf.Clamp01(_flashT / .15f));
+                if (_flashT <= 0f) _sr.color = Color.white;
+            }
             // Движение WASD/стрелки + мышь-направление
-            Vector2 dir = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical")).normalized;
+            Vector2 dir = InputHelper.MoveDir();   // оси + фолбэк прямого чтения WASD/стрелок
             Vector2 mouse = MouseAim.WorldPoint;
             _rb.MovePosition(_rb.position + dir * baseSpeed * Time.deltaTime);
             // Ограничение арены
@@ -153,17 +162,9 @@ namespace PotatoHeroes
             if (!Alive) return;
             amount = Mathf.Max(1f, amount * (1f - armorPct / 100f));
             hp -= amount;
-            // вспышка урона обрабатывается через color в Update (см. hurtT)
-            StartCoroutine(Flash());
+            _flashT = .15f;
             HUD.I?.Refresh();
             if (hp <= 0f) { hp = 0f; Die(); }
-        }
-
-        System.Collections.IEnumerator Flash()
-        {
-            _sr.color = Color.red;
-            yield return new WaitForSeconds(.12f);
-            _sr.color = Color.white;
         }
 
         public void Heal(int v) { hp = Mathf.Min(maxHp, hp + v); HUD.I?.Refresh(); }

@@ -9,8 +9,9 @@ namespace PotatoHeroes
 
     public static class GameCfg
     {
-        // Пиксели на единицу мира: спрайт 32px => 1.6 юнита при PPU=20
-        public const float PPU = 20f;
+        // Пиксели на единицу мира. Реальные кадры спрайт-шитов ~96x56 px (см. AssetBank),
+        // поэтому PPU=48: слизь ≈ 2 юнита, персонаж ≈ 2.7 юнита — крупные, читаемые спрайты.
+        public const float PPU = 48f;
         public static Vector2 S(float w, float h) => new Vector2(w / PPU, h / PPU);
 
         public static readonly Color[] BulletColors =
@@ -64,8 +65,11 @@ namespace PotatoHeroes
     {
         public EnemyType type;
         public string nameRU;
-        public float hp, speed, damage, xpValue, spriteW, spriteH;
-        public int frameW, frameH, frames;
+        public float hp, speed, damage, xpValue;
+        // ЛОГИЧЕСКИЙ размер моба в юнитах мира (для коллайдера). Реальные пиксельные
+        // размеры кадров спрайт-шитов задаются один раз в AssetBank.SheetLayout.
+        public float spriteW = 2f, spriteH = 2f;
+        public int frames;
         public float animFps;
         public bool flying;
 
@@ -75,15 +79,14 @@ namespace PotatoHeroes
             var d = new EnemyDef { type = t };
             switch (t)
             {
-                case EnemyType.GreenSlime: d.nameRU="Зелёная слизь"; d.hp=10; d.speed=2.4f; d.damage=4; d.xpValue=2; d.spriteW=d.spriteH=24; d.frames=4; d.animFps=6; break;
-                case EnemyType.RedSlime:   d.nameRU="Красная ярость"; d.hp=18; d.speed=3.1f; d.damage=6; d.xpValue=3; d.spriteW=d.spriteH=24; d.frames=4; d.animFps=7; break;
-                case EnemyType.BlueSlime:  d.nameRU="Ледяная слизь"; d.hp=14; d.speed=2.0f; d.damage=5; d.xpValue=3; d.spriteW=d.spriteH=24; d.frames=4; d.animFps=6; break;
-                case EnemyType.Bat:        d.nameRU="Летучая мышь"; d.hp=8; d.speed=4.2f; d.damage=3; d.xpValue=2; d.spriteW=d.spriteH=24; d.frames=4; d.animFps=12; d.flying=true; break;
-                case EnemyType.Ghost:      d.nameRU="Призрак огородa"; d.hp=26; d.speed=2.2f; d.damage=8; d.xpValue=5; d.spriteW=24; d.spriteH=28; d.frames=4; d.animFps=8; d.flying=true; break;
-                case EnemyType.BossKingGelatin: d.nameRU="КОРОЛЬ ЖЕЛЕ"; d.hp=420; d.speed=1.7f; d.damage=14; d.xpValue=60; d.spriteW=d.spriteH=40; d.frames=4; d.animFps=5; break;
+                case EnemyType.GreenSlime: d.nameRU="Зелёная слизь"; d.hp=10; d.speed=2.4f; d.damage=4; d.xpValue=2; d.spriteW=d.spriteH=2f; d.frames=4; d.animFps=6; break;
+                case EnemyType.RedSlime:   d.nameRU="Красная ярость"; d.hp=18; d.speed=3.1f; d.damage=6; d.xpValue=3; d.spriteW=d.spriteH=2f; d.frames=4; d.animFps=7; break;
+                case EnemyType.BlueSlime:  d.nameRU="Ледяная слизь"; d.hp=14; d.speed=2.0f; d.damage=5; d.xpValue=3; d.spriteW=d.spriteH=2f; d.frames=4; d.animFps=6; break;
+                case EnemyType.Bat:        d.nameRU="Летучая мышь"; d.hp=8; d.speed=4.2f; d.damage=3; d.xpValue=2; d.spriteW=2f; d.spriteH=1.5f; d.frames=4; d.animFps=12; d.flying=true; break;
+                case EnemyType.Ghost:      d.nameRU="Призрак огорода"; d.hp=26; d.speed=2.2f; d.damage=8; d.xpValue=5; d.spriteW=2f; d.spriteH=2.4f; d.frames=4; d.animFps=8; d.flying=true; break;
+                case EnemyType.BossKingGelatin: d.nameRU="КОРОЛЬ ЖЕЛЕ"; d.hp=420; d.speed=1.7f; d.damage=14; d.xpValue=60; d.spriteW=d.spriteH=3.4f; d.frames=4; d.animFps=5; break;
             }
             d.hp = Mathf.RoundToInt(d.hp * scale);
-            d.frameW = (int)d.spriteW; d.frameH = (int)d.spriteH;
             return d;
         }
     }

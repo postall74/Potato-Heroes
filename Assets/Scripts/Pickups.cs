@@ -49,7 +49,7 @@ namespace PotatoHeroes
             }
             _vel *= (1f - Time.deltaTime * 2f);
             transform.position = p + _vel * Time.deltaTime;
-            if (_t > 30f) Destroy(gameObject);
+            if (_t > 60f) Destroy(gameObject);
         }
     }
 
@@ -105,7 +105,7 @@ namespace PotatoHeroes
                 {
                     frames = new Sprite[4];
                     for (int i = 0; i < 4; i++)
-                        frames[i] = Sprite.Create(tex, new Rect(i*12,0,12,12), new Vector2(.5f,.5f), GameCfg.PPU);
+                        frames[i] = Sprite.Create(tex, new Rect(i*48,0,48,48), new Vector2(.5f,.5f), GameCfg.PPU);
                     AssetBank.I.animFrames["vfx_spark"] = frames;
                 }
             }

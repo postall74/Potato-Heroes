@@ -11,7 +11,8 @@ namespace PotatoHeroes
         public static HUD I { get; private set; }
 
         Canvas _canvas;
-        Text _hpText, _hpBar, _waveText, _timerText, _xpText, _xpBar, _killsText, _weaponBar;
+        Text _hpText, _waveText, _timerText, _xpText, _killsText, _weaponBar;
+        Image _hpBar, _xpBar;
         RectTransform _root;
         readonly Queue<Text> _floatPool = new();
         readonly List<(Text t, float life, Vector2 v)> _floats = new();
@@ -19,6 +20,8 @@ namespace PotatoHeroes
 
         void Awake()
         {
+            // Защита от дубликатов синглтона (сообщение "Multiple managers are loaded of type: PhysicsManager")
+            if (I != null && I != this) { Destroy(gameObject); return; }
             I = this;
             BuildCanvas();
         }

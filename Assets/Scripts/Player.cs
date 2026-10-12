@@ -62,7 +62,7 @@ namespace PotatoHeroes
         {
             if (!Alive) return;
             // Движение WASD/стрелки + мышь-направление
-            Vector2 dir = new(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical")).normalized;
+            Vector2 dir = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical")).normalized;
             Vector2 mouse = MouseAim.WorldPoint;
             _rb.MovePosition(_rb.position + dir * baseSpeed * Time.deltaTime);
             // Ограничение арены

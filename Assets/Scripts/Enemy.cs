@@ -67,7 +67,7 @@ namespace PotatoHeroes
             _flashT = Mathf.Max(0, _flashT - Time.deltaTime);
             if (_flashT <= 0) _sr.color = Color.white;
 
-            var target = Player.Position;
+            var target = Position;
             var pos = _rb.position;
             var dir = (target - pos);
             float dist = dir.magnitude;

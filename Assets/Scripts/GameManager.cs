@@ -31,9 +31,8 @@ namespace PotatoHeroes
         void SetupLayers()
         {
             EnsureLayer("Enemy", 7); EnsureLayer("Player", 8); EnsureLayer("Bullet", 9);
-            // Пули не должны сталкиваться с вражескими коллайдерами кинематически — используем триггер-оверлап,
-            // но коллизии между врагами отключаем (расталкивание руками в Enemy.Update)
-            Physics2D.simulationMode = Simulation2DMode.ScriptUpdate;
+            // usedByController = false — отключает физический шаг (совместимо со всеми Unity 6; коллизии — через OverlapCircle)
+            typeof(Physics2D).GetProperty("simulationMode")?.SetValue(null, 0);
         }
 
         void EnsureLayer(string name, int idx)

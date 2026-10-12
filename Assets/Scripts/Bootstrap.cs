@@ -7,7 +7,7 @@ namespace PotatoHeroes
     {
         void Awake()
         {
-            if (FindAnyObjectByType<GameManager>() != null) return;
+            if (FindAnyObjectByType<GameManager>() != null) { Destroy(gameObject); return; }
             gameObject.name = "[GAME]";
             gameObject.AddComponent<HUD>();          // сначала UI-синглтон
             gameObject.AddComponent<GameManager>();  // затем игра

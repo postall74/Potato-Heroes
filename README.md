@@ -4,8 +4,8 @@ Roguelike-арена в духе **Brotato**, но со своими персо�
 вы — картофельный герой, защищающий огород от волн слизи, летучих мышей и призраков.
 
 ## Быстрый старт
-1. Установите **Unity 6 (6000.x)**, откройте эту папку как проект (Unity Hub → Add project).
-   Unity сам доустановит пакеты из `Packages/manifest.json` (модуль 2D).
+1. Установите **Unity 6 (6000.0.x, LTS)** через Unity Hub и откройте эту папку как проект (Add project → выбрать `/workspace`).
+   Unity импортирует скрипты и настроит всё автоматически (меню *Potato Heroes → Setup Project*).
 2. Дождитесь импорта ассетов (скрипт `Assets/Editor/ProjectSetup.cs` сам настроит спрайты и слои).
 3. Откройте `Assets/Scenes/SampleScene.unity` → **Play**.
 

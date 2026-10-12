@@ -9,7 +9,7 @@ namespace PotatoHeroes
     {
         public int value;
         Vector2 _vel; float _t;
-        static readonly List<XPDrop> Active = new();
+        static readonly List<XPDrop> Active = new List<XPDrop>();
 
         public static void Spawn(Vector3 pos, int xpValue)
         {

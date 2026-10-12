@@ -22,7 +22,7 @@ namespace PotatoHeroes
         public float rangeMul = 1f;
         public float xpMul = 1f;
 
-        public List<WeaponDef> weapons = new();
+        public List<WeaponDef> weapons = new List<WeaponDef>();
         float[] _cds = new float[8];
         SpriteAnimator _anim;
         Rigidbody2D _rb;

@@ -14,8 +14,8 @@ namespace PotatoHeroes
         Text _hpText, _waveText, _timerText, _xpText, _killsText, _weaponBar;
         Image _hpBar, _xpBar;
         RectTransform _root;
-        readonly Queue<Text> _floatPool = new();
-        readonly List<(Text t, float life, Vector2 v)> _floats = new();
+        readonly Queue<Text> _floatPool = new Queue<Text>();
+        readonly List<(Text t, float life, Vector2 v)> _floats = new List<(Text t, float life, Vector2 v)>();
         GameObject _upgradePanel, _menuPanel, _endPanel;
 
         void Awake()

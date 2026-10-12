@@ -14,16 +14,25 @@ namespace PotatoHeroes
         public bool bossWave => wave == GameCfg.MaxWaves;
         public int kills;
         public int level = 1, xp, xpNext = 8;
-        readonly Dictionary<string,int> _stacks = new();
+        readonly Dictionary<string,int> _stacks = new Dictionary<string,int>();
         CharacterDef _selectedChar;
         Transform _spawnRoot;
         int _toSpawn; float _spawnCd;
         bool _bossAlive;
 
+        static GameManager _createdThisSession;
+
         void Awake()
         {
+            // Защита от дубликата: если компонент был добавлен на [GAME] вручную (или Bootstrap
+            // сработал повторно), а такой менеджер уже есть в этом рантайме — удаляем лишний.
+            if (_createdThisSession != null && _createdThisSession != this)
+            {
+                Destroy(this);          // снимаем лишний компонент, объект [GAME] не трогаем
+                return;
+            }
             if (I != null && I != this) { Destroy(gameObject); return; }
-            I = this;
+            _createdThisSession = I = this;
             Application.targetFrameRate = 60;
             SetupLayers();
         }
@@ -31,8 +40,10 @@ namespace PotatoHeroes
         void SetupLayers()
         {
             EnsureLayer("Enemy", 7); EnsureLayer("Player", 8); EnsureLayer("Bullet", 9);
-            // usedByController = false — отключает физический шаг (совместимо со всеми Unity 6; коллизии — через OverlapCircle)
-            typeof(Physics2D).GetProperty("simulationMode")?.SetValue(null, 0);
+            // Физический шаг движка нам не нужен: ВСЕ тела RigidbodyType2D.Kinematic,
+            // движение — трансформом/MovePosition, попадания — Physics2D.OverlapCircleAll.
+            // Поэтому просто не вызываем никаких физических шагов; менять simulationMode необязательно
+            // (в разных сборках Unity 6 имя enum/свойства отличается — отсюда была ошибка CS0103).
         }
 
         void EnsureLayer(string name, int idx)

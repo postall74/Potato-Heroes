@@ -10,8 +10,8 @@ namespace PotatoHeroes
     {
         public static AssetBank I { get; private set; }
 
-        public Dictionary<string, Texture2D> sheets = new();
-        public Dictionary<string, Sprite[]> animFrames = new(); // name -> кадры
+        public Dictionary<string, Texture2D> sheets = new Dictionary<string, Texture2D>();
+        public Dictionary<string, Sprite[]> animFrames = new Dictionary<string, Sprite[]>(); // name -> кадры
         public Sprite bulletSpr, xpBlue, xpYellow, xpRed, chest, swing, floorTile, wallTile;
         public Sprite[] weaponIcons;
         public Font font;

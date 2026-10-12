@@ -6,7 +6,7 @@ namespace PotatoHeroes
     [RequireComponent(typeof(Rigidbody2D), typeof(SpriteRenderer))]
     public class Enemy : MonoBehaviour
     {
-        public static readonly List<Enemy> All = new();
+        public static readonly List<Enemy> All = new List<Enemy>();
 
         public EnemyDef def;
         public float hp;
@@ -113,7 +113,7 @@ namespace PotatoHeroes
         {
             if (Destroying) return;
             Destroying = true;
-            XPDrop.Spawn(transform.position, def.xpValue);
+            XPDrop.Spawn(transform.position, Mathf.RoundToInt(def.xpValue));
             if (def.type == EnemyType.BossKingGelatin) GameManager.I?.OnBossKilled();
             if (Player.I && Player.I.Alive && Player.I.lifeSteal > 0) Player.I.Heal(Player.I.lifeSteal);
             GameManager.I?.CountKill();

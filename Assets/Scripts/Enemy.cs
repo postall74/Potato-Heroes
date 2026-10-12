@@ -1,0 +1,140 @@
+using System.Collections.Generic;
+using UnityEngine;
+
+namespace PotatoHeroes
+{
+    [RequireComponent(typeof(Rigidbody2D), typeof(SpriteRenderer))]
+    public class Enemy : MonoBehaviour
+    {
+        public static readonly List<Enemy> All = new();
+
+        public EnemyDef def;
+        public float hp;
+        public float Radius => GameCfg.S(def.spriteW, def.spriteH).x * .42f;
+        public bool Alive => hp > 0f && !Destroying;
+        public bool Destroying { get; private set; }
+
+        Rigidbody2D _rb;
+        SpriteRenderer _sr;
+        SpriteAnimator _anim;
+        ContactCaster2D _cc;
+        float _touchCd, _flashT, _wobblePhase;
+        Vector3 _baseScale;
+
+        static int ENEMY_LAYER, PLAYER_LAYER, BULLET_LAYER;
+
+        void Awake()
+        {
+            ENEMY_LAYER = LayerMask.NameToLayer("Enemy") >= 0 ? LayerMask.NameToLayer("Enemy") : 7;
+            PLAYER_LAYER = LayerMask.NameToLayer("Player") >= 0 ? LayerMask.NameToLayer("Player") : 8;
+            BULLET_LAYER = LayerMask.NameToLayer("Bullet") >= 0 ? LayerMask.NameToLayer("Bullet") : 9;
+
+            _rb = GetComponent<Rigidbody2D>();
+            _sr = GetComponent<SpriteRenderer>();
+            _anim = GetComponent<SpriteAnimator>();
+            _rb.bodyType = RigidbodyType2D.Kinematic;
+            _rb.gravityScale = 0f;
+            _rb.freezeRotation = true;
+            gameObject.layer = ENEMY_LAYER;
+
+            var col = gameObject.AddComponent<CircleCollider2D>();
+            col.radius = Radius;
+            col.isTrigger = false;
+
+            // ContactCaster для детекции касания игрока (без физ. отдачи)
+            try
+            {
+                var layer = new LayerMask { value = 1 << PLAYER_LAYER };
+                _cc = _rb.AddContactCaster2D(col, layer, .05f, false);
+                _cc.onContactFunction += OnContact;
+            }
+            catch { /* на худой конец сработает дистанционная атака ниже */ }
+
+            All.Add(this);
+        }
+
+        void OnDestroy() { All.Remove(this); }
+
+        public void Setup(EnemyDef d, Sprite[] frames, float fps)
+        {
+            def = d; hp = d.hp;
+            _anim.Play(frames, fps);
+            _baseScale = transform.localScale;
+            _wobblePhase = Random.value * 6.28f;
+        }
+
+        void OnContact(ContactParam2D p)
+        {
+            if (p.otherGameObject.layer == PLAYER_LAYER) TryTouchAttack();
+        }
+
+        void TryTouchAttack()
+        {
+            if (_touchCd > 0f || !Alive || !Player.I || !Player.I.Alive) return;
+            _touchCd = .55f;
+            Player.I.TakeDamage(def.damage);
+        }
+
+        void Update()
+        {
+            if (!Alive || !Player.I || !Player.I.Alive) { return; }
+            _touchCd -= Time.deltaTime;
+            _flashT = Mathf.Max(0, _flashT - Time.deltaTime);
+            if (_flashT <= 0) _sr.color = Color.white;
+
+            var target = Player.Position;
+            var pos = _rb.position;
+            var dir = (target - pos);
+            float dist = dir.magnitude;
+            if (dist > .001f) dir /= dist;
+
+            // Небольшое "дышащее" покачивание скорости — живость mob'ов
+            float spd = def.speed * (1f + .12f * Mathf.Sin(Time.time * 3f + _wobblePhase));
+
+            // Расталкивание от других врагов (скольжение вдоль касательной)
+            foreach (var e in All)
+            {
+                if (e == this || !e.Alive) continue;
+                var v = pos - e._rb.position;
+                float d = v.magnitude;
+                float minD = Radius + e.Radius;
+                if (d < minD && d > .0001f)
+                    pos += v / d * (minD - d) * .5f;
+            }
+
+            if (dist > .9f)
+                _rb.MovePosition(pos + dir * spd * Time.deltaTime);
+            else
+                TryTouchAttack();
+
+            // Дистанционная проверка касания (страховка без ContactCaster)
+            if (dist < Radius + .5f) TryTouchAttack();
+
+            _sr.flipX = dir.x < 0f;
+        }
+
+        public void TakeDamage(float dmg, bool fromBullet)
+        {
+            if (!Alive) return;
+            hp -= dmg;
+            _flashT = .1f;
+            _sr.color = Color.white * 1.6f;
+            DamageText.Spawn(transform.position + Vector3.up * .6f, Mathf.RoundToInt(dmg));
+            VfxSpark.Spawn(transform.position);
+            if (hp <= 0f) Die();
+        }
+
+        void Die()
+        {
+            if (Destroying) return;
+            Destroying = true;
+            XPDrop.Spawn(transform.position, def.xpValue);
+            if (def.type == EnemyType.BossKingGelatin) GameManager.I?.OnBossKilled();
+            if (Player.I && Player.I.Alive && Player.I.lifeSteal > 0) Player.I.Heal(Player.I.lifeSteal);
+            GameManager.I?.CountKill();
+            Destroy(gameObject, .02f);
+        }
+
+        static Vector2 Position => Player.I ? Player.I.Position : Vector2.zero;
+    }
+}

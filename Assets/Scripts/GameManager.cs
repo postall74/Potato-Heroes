@@ -83,7 +83,7 @@ namespace PotatoHeroes
                 go.transform.SetParent(_spawnRoot, false);
                 go.transform.position = new Vector3(-GameCfg.ArenaW/2 + x*tileW + tileW/2, -GameCfg.ArenaH/2 + y*tileH + tileH/2);
                 var sr = go.AddComponent<SpriteRenderer>();
-                sr.sprite = bank.floorTile; sr.pixelsPerUnit = GameCfg.PPU; sr.sortingOrder = -10;
+                sr.sprite = bank.floorTile; sr.sortingOrder = -10;
             }
             // Стены по периметру
             for (int x = -1; x <= cols; x++) for (int y = -1; y <= rows; y++)
@@ -94,7 +94,7 @@ namespace PotatoHeroes
                 go.transform.SetParent(_spawnRoot, false);
                 go.transform.position = new Vector3(-GameCfg.ArenaW/2 + x*tileW + tileW/2, -GameCfg.ArenaH/2 + y*tileH + tileH/2);
                 var sr = go.AddComponent<SpriteRenderer>();
-                sr.sprite = bank.wallTile; sr.pixelsPerUnit = GameCfg.PPU; sr.sortingOrder = -9;
+                sr.sprite = bank.wallTile; sr.sortingOrder = -9;
             }
         }
 

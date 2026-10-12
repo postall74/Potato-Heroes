@@ -12,10 +12,10 @@ namespace PotatoHeroes
         {
             if (AssetBank.I == null) return;
             var go = new GameObject("Bullet");
+            go.layer = LayerMask.NameToLayer("Bullet") >= 0 ? LayerMask.NameToLayer("Bullet") : 9;   // слой задаём ДО AddComponent, чтобы Awake не трогал чужие слои
             go.transform.position = pos;
             var sr = go.AddComponent<SpriteRenderer>();
             sr.sprite = AssetBank.I.bulletSpr;
-            sr.pixelsPerUnit = GameCfg.PPU;   // фиксируем физический размер снаряда
             sr.color = GameCfg.BulletColors[colorIdx % GameCfg.BulletColors.Length];
             sr.sortingOrder = 5;
             var rb = go.AddComponent<Rigidbody2D>();
@@ -24,7 +24,6 @@ namespace PotatoHeroes
             b._dir = dir.normalized; b._speed = speed; b._dmg = dmg; b._life = 1.6f;
             go.transform.rotation = Quaternion.LookRotation(Vector3.forward, new Vector3(-b._dir.y, b._dir.x));
             ENEMY_LAYER = LayerMask.NameToLayer("Enemy") >= 0 ? LayerMask.NameToLayer("Enemy") : 7;
-            go.layer = LayerMask.NameToLayer("Bullet") >= 0 ? LayerMask.NameToLayer("Bullet") : 9;
             var col = go.AddComponent<CircleCollider2D>();
             col.radius = .18f; col.isTrigger = true;
         }

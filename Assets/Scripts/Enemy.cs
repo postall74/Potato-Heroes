@@ -47,7 +47,8 @@ namespace PotatoHeroes
             col.isTrigger = false;
             _col = col;
 
-            All.Add(this);
+            // в список All добавляемся только после полной настройки (см. Setup) —
+            // иначе Update() других врагов увидит неинициализированный экземпляр.
         }
 
         CircleCollider2D _col;
@@ -59,12 +60,13 @@ namespace PotatoHeroes
         public void Configure(EnemyDef d, Sprite[] frames, float fps)
         {
             Setup(d, frames, fps);
-            if (_sr != null) _sr.pixelsPerUnit = GameCfg.PPU;   // фиксированный размер кадра в мире
+            // размер задаётся PPU спрайтов из AssetBank
         }
 
         public void Setup(EnemyDef d, Sprite[] frames, float fps)
         {
             def = d; hp = d.hp;
+            if (!All.Contains(this)) All.Add(this);   // регистрируемся только после инициализации
             Radius = GameCfg.S(d.spriteW, d.spriteH).x * .42f;
             if (_col != null) _col.radius = Radius;
             if (_sr == null) _sr = GetComponent<SpriteRenderer>();
@@ -99,7 +101,7 @@ namespace PotatoHeroes
             float spd = def.speed * (1f + .12f * Mathf.Sin(Time.time * 3f + _wobblePhase));
 
             // Расталкивание от других врагов (скольжение вдоль касательной)
-            foreach (var e in All)
+            foreach (var e in All.ToArray())
             {
                 if (e == this || !e.Alive) continue;
                 var v = pos - e._rb.position;

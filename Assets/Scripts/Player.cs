@@ -28,7 +28,7 @@ namespace PotatoHeroes
         Rigidbody2D _rb;
         SpriteRenderer _sr;
         Vector3[] _weaponGfx = new Vector3[8];
-        int _hurtFlashT;
+
 
         public bool Alive => hp > 0f;
 
@@ -49,7 +49,6 @@ namespace PotatoHeroes
 
         public void Configure(CharacterDef def, Sprite[] frames)
         {
-            if (_sr != null) _sr.pixelsPerUnit = GameCfg.PPU;
             Setup(def, frames);
         }
 
@@ -154,7 +153,7 @@ namespace PotatoHeroes
             if (!Alive) return;
             amount = Mathf.Max(1f, amount * (1f - armorPct / 100f));
             hp -= amount;
-            _hurtFlashT = 6;
+            // вспышка урона обрабатывается через color в Update (см. hurtT)
             StartCoroutine(Flash());
             HUD.I?.Refresh();
             if (hp <= 0f) { hp = 0f; Die(); }

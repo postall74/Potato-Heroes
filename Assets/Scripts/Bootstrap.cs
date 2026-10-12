@@ -8,8 +8,9 @@ namespace PotatoHeroes
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         static void AutoCreate()
         {
+            // Объект [GAME] уже есть в сцене SampleScene — не дублируем.
+            if (FindAnyObjectByType<Bootstrap>() != null) return;
             var go = new GameObject("[GAME]");
-            DontDestroyOnLoad(go);
             go.AddComponent<Bootstrap>();
         }
 

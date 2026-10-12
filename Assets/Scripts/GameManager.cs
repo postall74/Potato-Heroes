@@ -356,12 +356,10 @@ namespace PotatoHeroes
     {
         void LateUpdate()
         {
-            var target = Player.I ? (Vector3)Player.I.Position : Vector3.zero;
-            transform.position = Vector3.Lerp(transform.position, target + new Vector3(0,0,-10), Time.deltaTime * 6f);
-            transform.position = new Vector3(
-                Mathf.Clamp(transform.position.x, -2f, 2f),
-                Mathf.Clamp(transform.position.y, -1.5f, 1.5f),
-                -10f);
+            var target = Player.I ? (Vector2)Player.I.Position : Vector2.zero;
+            float x = Mathf.Clamp(Mathf.Lerp(transform.position.x, target.x, Time.deltaTime * 6f), -2f, 2f);
+            float y = Mathf.Clamp(Mathf.Lerp(transform.position.y, target.y, Time.deltaTime * 6f), -1.5f, 1.5f);
+            transform.position = new Vector3(x, y, transform.position.z); // z остаётся -10
         }
     }
 

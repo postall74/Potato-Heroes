@@ -36,7 +36,7 @@ namespace PotatoHeroes
         {
             I = this;
             _rb = GetComponent<Rigidbody2D>();
-            _sr = GetComponent<SpriteRenderer>();
+            _sr = GetComponent<SpriteRenderer>();   // создаётся спавнером ПОСЛЕ Player — берём сейчас
             _anim = GetComponent<SpriteAnimator>();
             var col = gameObject.AddComponent<CapsuleCollider2D>();
             col.size = GameCfg.S(20, 24);
@@ -55,7 +55,9 @@ namespace PotatoHeroes
             baseSpeed = 5f * def.spdMul;
             armorPct = Mathf.RoundToInt((1f - def.armorMul) * 100f);
             bonusDamage = Mathf.RoundToInt(5 * (def.dmgMul - 1f));
-            _anim.Play(frames, 9f);
+            if (_sr == null) _sr = GetComponent<SpriteRenderer>();
+            if (_sr != null && frames != null && frames.Length > 0) _sr.sprite = frames[0];
+            if (_anim != null) _anim.Play(frames, 9f);
         }
 
         void Update()

@@ -15,6 +15,7 @@ namespace PotatoHeroes
             go.transform.position = pos;
             var sr = go.AddComponent<SpriteRenderer>();
             sr.sprite = AssetBank.I.bulletSpr;
+            sr.pixelsPerUnit = GameCfg.PPU;   // фиксируем физический размер снаряда
             sr.color = GameCfg.BulletColors[colorIdx % GameCfg.BulletColors.Length];
             sr.sortingOrder = 5;
             var rb = go.AddComponent<Rigidbody2D>();

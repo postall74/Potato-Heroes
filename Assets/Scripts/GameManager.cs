@@ -83,7 +83,7 @@ namespace PotatoHeroes
                 go.transform.SetParent(_spawnRoot, false);
                 go.transform.position = new Vector3(-GameCfg.ArenaW/2 + x*tileW + tileW/2, -GameCfg.ArenaH/2 + y*tileH + tileH/2);
                 var sr = go.AddComponent<SpriteRenderer>();
-                sr.sprite = bank.floorTile; sr.sortingOrder = -10;
+                sr.sprite = bank.floorTile; sr.pixelsPerUnit = GameCfg.PPU; sr.sortingOrder = -10;
             }
             // Стены по периметру
             for (int x = -1; x <= cols; x++) for (int y = -1; y <= rows; y++)
@@ -94,7 +94,7 @@ namespace PotatoHeroes
                 go.transform.SetParent(_spawnRoot, false);
                 go.transform.position = new Vector3(-GameCfg.ArenaW/2 + x*tileW + tileW/2, -GameCfg.ArenaH/2 + y*tileH + tileH/2);
                 var sr = go.AddComponent<SpriteRenderer>();
-                sr.sprite = bank.wallTile; sr.sortingOrder = -9;
+                sr.sprite = bank.wallTile; sr.pixelsPerUnit = GameCfg.PPU; sr.sortingOrder = -9;
             }
         }
 
@@ -107,11 +107,15 @@ namespace PotatoHeroes
             // Игрок
             var pgo = new GameObject("Player");
             pgo.layer = LayerMask.NameToLayer("Player") >= 0 ? LayerMask.NameToLayer("Player") : 8;
-            var psr = pgo.AddComponent<SpriteRenderer>();
-            psr.sortingOrder = 8;
+            pgo.AddComponent<Rigidbody2D>();
             pgo.AddComponent<SpriteAnimator>();
             var pl = pgo.AddComponent<Player>();
-            pl.Setup(def, AssetBank.I.animFrames[def.sprite]);
+            var frames = AssetBank.I.animFrames[def.sprite];
+            var psr = pgo.AddComponent<SpriteRenderer>();   // после Player — Awake получит его
+            psr.sprite = frames[0];
+            psr.pixelsPerUnit = GameCfg.PPU;
+            psr.sortingOrder = 8;
+            pl.Setup(def, frames);
             pl.weapons.Add(WeaponDef.Make(WeaponKind.SpudPistol));
             HUD.I.BindGame();
 
@@ -203,12 +207,18 @@ namespace PotatoHeroes
         {
             var def = EnemyDef.Make(t, wave);
             var go = new GameObject(def.nameRU);
+            // ВАЖНО: SpriteRenderer создаётся ПОСЛЕДНИМ. Awake() Enemy берёт его через
+            // GetComponent — так компонент гарантированно получает уже настроенный рендерер.
             go.transform.position = RandomEdgePos();
-            var sr = go.AddComponent<SpriteRenderer>();
-            sr.sortingOrder = 6;
+            go.AddComponent<Rigidbody2D>();
             go.AddComponent<SpriteAnimator>();
             var e = go.AddComponent<Enemy>();
-            e.Setup(def, AssetBank.I.animFrames[SheetFor(t)], def.animFps);
+            var frames = AssetBank.I.animFrames[SheetFor(t)];
+            var sr = go.AddComponent<SpriteRenderer>();
+            sr.sprite = frames[0];
+            sr.pixelsPerUnit = GameCfg.PPU;   // реальный размер кадра в мире задаём сами
+            sr.sortingOrder = 6;
+            e.Setup(def, frames, def.animFps);
         }
 
         void SpawnBoss()
@@ -216,11 +226,15 @@ namespace PotatoHeroes
             var def = EnemyDef.Make(EnemyType.BossKingGelatin, wave);
             var go = new GameObject("BOSS");
             go.transform.position = new Vector3(0, GameCfg.ArenaH/2 - 2f);
-            var sr = go.AddComponent<SpriteRenderer>();
-            sr.sortingOrder = 7;
+            go.AddComponent<Rigidbody2D>();
             go.AddComponent<SpriteAnimator>();
             var e = go.AddComponent<Enemy>();
-            e.Setup(def, AssetBank.I.animFrames[SheetFor(EnemyType.BossKingGelatin)], def.animFps);
+            var frames = AssetBank.I.animFrames[SheetFor(EnemyType.BossKingGelatin)];
+            var sr = go.AddComponent<SpriteRenderer>();
+            sr.sprite = frames[0];
+            sr.pixelsPerUnit = GameCfg.PPU;
+            sr.sortingOrder = 7;
+            e.Setup(def, frames, def.animFps);
             _bossAlive = true; bossKilledFlag = false;
         }
 

@@ -23,7 +23,7 @@ namespace PotatoHeroes
                 var sr = go.AddComponent<SpriteRenderer>();
                 int v = Mathf.Max(1, xpValue / count);
                 Sprite spr = v >= 8 ? AssetBank.I.xpRed : (v >= 4 ? AssetBank.I.xpYellow : AssetBank.I.xpBlue);
-                sr.sprite = spr; sr.sortingOrder = 3;
+                sr.sprite = spr; sr.pixelsPerUnit = GameCfg.PPU; sr.sortingOrder = 3;
                 var d = go.AddComponent<XPDrop>();
                 d.value = v;
                 d._vel = new Vector2(Random.Range(-2f,2f), Random.Range(1f,3f));
@@ -62,7 +62,7 @@ namespace PotatoHeroes
             var go = new GameObject("chest");
             go.transform.position = pos;
             var sr = go.AddComponent<SpriteRenderer>();
-            sr.sprite = AssetBank.I.chest; sr.sortingOrder = 4;
+            sr.sprite = AssetBank.I.chest; sr.pixelsPerUnit = GameCfg.PPU; sr.sortingOrder = 4;
             var c = go.AddComponent<ChestPickup>();
             c.kind = k; c.tier = tier;
             return c;
@@ -112,6 +112,7 @@ namespace PotatoHeroes
             var go = new GameObject("spark");
             go.transform.position = pos;
             var sr = go.AddComponent<SpriteRenderer>();
+            sr.pixelsPerUnit = GameCfg.PPU;
             sr.sortingOrder = 10;
             var anim = go.AddComponent<SpriteAnimator>();
             anim.Play(frames, 24f); anim.loop = false;
@@ -128,7 +129,7 @@ namespace PotatoHeroes
             var go = new GameObject("swing");
             go.transform.position = pos;
             var sr = go.AddComponent<SpriteRenderer>();
-            sr.sprite = AssetBank.I.swing; sr.sortingOrder = 9;
+            sr.sprite = AssetBank.I.swing; sr.pixelsPerUnit = GameCfg.PPU; sr.sortingOrder = 9;
             float scale = reach / 1.2f;
             go.transform.localScale = new Vector3(scale, scale, 1);
             go.transform.rotation = Quaternion.LookRotation(Vector3.forward, new Vector3(dir.y, -dir.x));

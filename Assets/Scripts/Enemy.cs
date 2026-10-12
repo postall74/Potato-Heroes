@@ -8,9 +8,12 @@ namespace PotatoHeroes
     {
         public static readonly List<Enemy> All = new List<Enemy>();
 
-        public EnemyDef def;
+        public EnemyDef def = new EnemyDef();   // всегда валидный экземпляр: исключает NRE,
+                                                // если кто-то обратится к def до Setup()
         public float hp;
-        public float Radius => GameCfg.S(def.spriteW, def.spriteH).x * .42f;
+        // ПУБЛИЧНОЕ поле, а не property: при AddComponent<T> свойство вызывается ДО Awake,
+        // и обращение к def до Setup() давало NullReferenceException. Значение ставится в Setup().
+        public float Radius = .5f;
         public bool Alive => hp > 0f && !Destroying;
         public bool Destroying { get; private set; }
 
@@ -29,26 +32,37 @@ namespace PotatoHeroes
             BULLET_LAYER = LayerMask.NameToLayer("Bullet") >= 0 ? LayerMask.NameToLayer("Bullet") : 9;
 
             _rb = GetComponent<Rigidbody2D>();
-            _sr = GetComponent<SpriteRenderer>();
+            _sr = GetComponent<SpriteRenderer>();   // спавнер создаёт его сразу после Enemy
             _anim = GetComponent<SpriteAnimator>();
-            _rb.bodyType = RigidbodyType2D.Kinematic;
-            _rb.gravityScale = 0f;
-            _rb.freezeRotation = true;
+            if (_rb != null)
+            {
+                _rb.bodyType = RigidbodyType2D.Kinematic;
+                _rb.gravityScale = 0f;
+                _rb.freezeRotation = true;
+            }
             gameObject.layer = ENEMY_LAYER;
 
             var col = gameObject.AddComponent<CircleCollider2D>();
-            col.radius = Radius;
+            col.radius = Radius;   // дефолт .5f; точное значение переставим в Setup()
             col.isTrigger = false;
+            _col = col;
 
             All.Add(this);
         }
+
+        CircleCollider2D _col;
 
         void OnDestroy() { All.Remove(this); }
 
         public void Setup(EnemyDef d, Sprite[] frames, float fps)
         {
             def = d; hp = d.hp;
-            _anim.Play(frames, fps);
+            Radius = GameCfg.S(d.spriteW, d.spriteH).x * .42f;
+            if (_col != null) _col.radius = Radius;
+            if (_sr == null) _sr = GetComponent<SpriteRenderer>();
+            if (_anim == null) _anim = GetComponent<SpriteAnimator>();
+            if (_sr != null && frames != null && frames.Length > 0) _sr.sprite = frames[0];
+            if (_anim != null) _anim.Play(frames, fps);
             _baseScale = transform.localScale;
             _wobblePhase = Random.value * 6.28f;
         }

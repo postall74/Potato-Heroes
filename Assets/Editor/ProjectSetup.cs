@@ -33,6 +33,23 @@ namespace PotatoHeroes.EditorTools
             };
         }
 
+
+        [InitializeOnLoadMethod]
+        static void EnsureSceneHasEntry()
+        {
+            EditorApplication.delayCall += () =>
+            {
+                var scene = UnityEngine.SceneManagement.SceneManager.GetActiveScene();
+                if (!scene.IsValid()) return;
+                var roots = scene.GetRootGameObjects();
+                foreach (var r in roots) if (r.name == "[GAME]") return;
+                var go = new GameObject("[GAME]");
+                go.AddComponent<PotatoHeroes.Bootstrap>();
+                UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(scene);
+                Debug.Log("[PotatoHeroes] Добавлен объект [GAME] со скриптом Bootstrap в сцену.");
+            };
+        }
+
         static void ConfigureSpriteImporters()
         {
             string dir = Path.Combine(Application.dataPath, "Sprites");
